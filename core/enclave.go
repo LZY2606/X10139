@@ -119,12 +119,16 @@ func Open(e *Enclave) (*Buffer, error) {
 
 	// Decrypt the enclave into the buffer we created.
 	_, err = Decrypt(e.ciphertext, k.Data(), b.Data())
-	if err != nil {
-		return nil, err
-	}
 
 	// Destroy our copy of the key.
 	k.Destroy()
+
+	if err != nil {
+		// Decryption failed. Destroy the temporary buffer so that any
+		// remnant plaintext is wiped and its pages are released.
+		b.Destroy()
+		return nil, err
+	}
 
 	// Return the contents of the Enclave inside a Buffer.
 	return b, nil
